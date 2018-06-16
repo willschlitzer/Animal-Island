@@ -7,13 +7,14 @@ import random
 
 
 def main():
-    max_clockticks = 100
+    max_clockticks = 500
     max_x = 100
     max_y = 100
     moose_list, moose_locs = moose_populator(max_x=max_x, max_y=max_y)
     wolf_list, wolf_locs = wolf_populator(
         max_x=max_x, max_y=max_y, moose_locs=moose_locs
     )
+    vegetation_dict = vegatation_populator(max_x=max_x, max_y=max_y)
     run_island(
         max_x=max_x,
         max_y=max_y,
@@ -22,8 +23,16 @@ def main():
         wolf_list=wolf_list,
         wolf_locs=wolf_locs,
         max_clockticks=max_clockticks,
+        vegetation_dict=vegetation_dict
     )
 
+def vegatation_populator(max_x, max_y):
+    vegetation_dict = {}
+    for x in range(max_x):
+        for y in range(max_y):
+            plant_loc = (x, y)
+            vegetation_dict[plant_loc] = [True, 0]
+    return vegetation_dict
 
 def moose_populator(max_x, max_y):
     initial_moose_number = 1000
@@ -46,7 +55,7 @@ def moose_populator(max_x, max_y):
 
 
 def wolf_populator(max_x, max_y, moose_locs):
-    initial_wolf_number = 120
+    initial_wolf_number = 350
     wolf_list = []
     wolf_locs = []
     for i in range(initial_wolf_number):
@@ -65,7 +74,7 @@ def wolf_populator(max_x, max_y, moose_locs):
 
 
 def run_island(
-    max_x, max_y, moose_list, moose_locs, wolf_list, wolf_locs, max_clockticks
+    max_x, max_y, moose_list, moose_locs, wolf_list, wolf_locs, max_clockticks, vegetation_dict
 ):
     clocktick = 0
     data_list = []
@@ -73,11 +82,11 @@ def run_island(
     print("Wolf Population: " + str(len(wolf_list)))
     print("Moose Population: " + str(len(moose_list)))
     # draw_island(max_x=max_x, max_y=max_y, moose_locs=moose_locs, wolf_locs=wolf_locs)
-    data_list.append([clocktick, len(wolf_list), len(moose_list), 0, 0, 0, 0, 0])
+    data_list.append([clocktick, len(wolf_list), len(moose_list), 0, 0, 0, 0, 0, 0, 0])
     while clocktick < max_clockticks:
         clocktick += 1
-        moose_list, moose_locs, wolf_list, wolf_locs, wolf_births, wolf_starves, wolf_old_age, moose_eaten, moose_births = single_clocktick(
-            max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list
+        moose_list, moose_locs, wolf_list, wolf_locs, wolf_births, wolf_starves, wolf_old_age, moose_eaten, moose_births, moose_starves, moose_old_age, vegetation_dict = single_clocktick(
+            max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list, vegetation_dict=vegetation_dict
         )
         data_list.append(
             [
@@ -89,6 +98,8 @@ def run_island(
                 wolf_old_age,
                 moose_eaten,
                 moose_births,
+                moose_starves,
+                moose_old_age
             ]
         )
         if clocktick % 10 == 0 and max_clockticks > clocktick:
@@ -100,6 +111,8 @@ def run_island(
             print("Wolf Old Age Death: " + str(wolf_old_age))
             print("Moose Eaten: " + str(moose_eaten))
             print("Moose Births: " + str(moose_births))
+            print("Moose Starves: " + str(moose_starves))
+            print("Moose Old Age Death: " + str(moose_old_age))
             # draw_island(max_x=max_x, max_y=max_y, moose_locs=moose_locs, wolf_locs=wolf_locs)
 
     print("Final Population After " + str(max_clockticks) + " Clockticks")
@@ -120,12 +133,14 @@ def run_island(
             "wolf_old_age",
             "moose_eaten",
             "moose_births",
+            "moose_starves",
+            "moose_old_age"
         ],
     )
     wolf_moose_file = "run_data/wolf_moose.csv"
     wolf_moose_fig = "run_data/wolf_moose_chart.png"
     wolf_moose_df.to_csv(wolf_moose_file, sep=",")
-    print(wolf_moose_df)
+    #print(wolf_moose_df)
     column_list = ["wolves", "moose"]
     wolf_moose_df[column_list].plot()
     plt.xlabel("Clock tick")
@@ -133,13 +148,14 @@ def run_island(
     plt.show()
 
 
-def single_clocktick(max_x, max_y, moose_list, wolf_list):
+def single_clocktick(max_x, max_y, moose_list, wolf_list, vegetation_dict):
     moose_list, wolf_list, wolf_births, wolf_starves, wolf_old_age, moose_eaten = wolf_mover(
         max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list
     )
-    moose_list, moose_births = moose_mover(
-        max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list
+    moose_list, moose_births, moose_starves, moose_old_age, vegetation_dict = moose_mover(
+        max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list, vegetation_dict=vegetation_dict
     )
+    vegetation_dict = vegetation_growing(vegetation_dict)
 
     wolf_locs = location_list(wolf_list)
     moose_locs = location_list(moose_list)
@@ -153,8 +169,18 @@ def single_clocktick(max_x, max_y, moose_list, wolf_list):
         wolf_old_age,
         moose_eaten,
         moose_births,
+        moose_starves,
+        moose_old_age,
+        vegetation_dict
     )
 
+def vegetation_growing(vegetation_dict):
+    # Add a vegetation total sum
+    for key in vegetation_dict.keys():
+        if (vegetation_dict[key][0] == False) and (vegetation_dict[key][1] >= 25):
+            vegetation_dict[key][0] = True
+        vegetation_dict[key][1] += 1
+    return vegetation_dict
 
 def location_list(animal_list):
     """This should be fixed to list unavailable and available spots"""
@@ -247,11 +273,21 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list):
     return moose_list, wolf_list, wolf_births, wolf_starves, wolf_old_age, moose_eaten
 
 
-def moose_mover(max_x, max_y, moose_list, wolf_list):
+def moose_mover(max_x, max_y, moose_list, wolf_list, vegetation_dict):
     birth_age = 30
     moose_births = 0
+    moose_starves = 0
+    moose_old_age = 0
+    for moose in moose_list:
+        if moose.age > moose.death_age:
+            moose_list.remove(moose)
+            moose_old_age += 1
+        elif moose.hunger > 10:
+            moose_list.remove(moose)
+            moose_starves += 1
     for moose in moose_list:
         moose.age += 1
+        moose.hunger += 1
         moose.calf_year += 1
         wolf_locs = location_list(wolf_list)
         moose_locs = location_list(moose_list)
@@ -270,8 +306,12 @@ def moose_mover(max_x, max_y, moose_list, wolf_list):
                 moose.x = new_loc[0]
                 moose.y = new_loc[1]
                 moved = True
-        if moose.age > moose.death_age:
-            moose_list.remove(moose)
+        moose_loc = (moose.x, moose.y)
+        moose_food = vegetation_dict[moose_loc]
+        if moose_food[0] == True and moose.hunger>0:
+            vegetation_dict[moose_loc][0] = False
+            vegetation_dict[moose_loc][1] = 0
+            moose.hunger -= 2
         if (moose.calf_year >= random.randint(birth_age - 5, birth_age + 5)) and (
             moose.age >= 36
         ):
@@ -300,7 +340,7 @@ def moose_mover(max_x, max_y, moose_list, wolf_list):
                     birthed = True
                 else:
                     birthed = True
-    return moose_list, moose_births
+    return moose_list, moose_births, moose_starves, moose_old_age, vegetation_dict
 
 
 def location_selector(loc_list):

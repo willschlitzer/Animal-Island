@@ -6,6 +6,7 @@ class MooseCreator:
         self.x = x
         self.y = y
         self.age = 0
+        self.hunger = 3
         self.calf_year = 0
         self.death_age = random.randint(180, 300)
 
