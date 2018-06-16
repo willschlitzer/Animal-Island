@@ -1,4 +1,6 @@
-class WolfCreator():
+import random
+
+class WolfCreator:
 
     def __init__(self, x, y):
         self.x = x
@@ -6,6 +8,7 @@ class WolfCreator():
         self.age = 0
         self.pup_year = 0
         self.hunger = 0
+        self.death_age = random.randint(120, 240)
 
     def wolf_age(self):
         self.age += 1
