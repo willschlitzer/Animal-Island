@@ -1,11 +1,13 @@
 from moose_controller import MooseCreator
 from wolf_controller import WolfCreator
+import matplotlib.pyplot as plt
+import pandas as pd
 import random
 
 def main():
     max_clockticks = 100
-    max_x = 100
-    max_y = 250
+    max_x = 10
+    max_y = 30
     moose_list, moose_locs = moose_populator(max_x = max_x, max_y=max_y)
     wolf_list, wolf_locs = wolf_populator(max_x= max_x, max_y= max_y, moose_locs=moose_locs)
     run_island(max_x=max_x, max_y=max_y,
@@ -14,7 +16,7 @@ def main():
                max_clockticks=max_clockticks)
 
 def moose_populator(max_x, max_y):
-    initial_moose_number = 300
+    initial_moose_number = 60
     moose_list = []
     moose_locs = []
     for i in range(initial_moose_number):
@@ -30,7 +32,7 @@ def moose_populator(max_x, max_y):
     return moose_list, moose_locs
 
 def wolf_populator(max_x, max_y, moose_locs):
-    initial_wolf_number = 50
+    initial_wolf_number = 15
     wolf_list = []
     wolf_locs = []
     for i in range(initial_wolf_number):
@@ -47,6 +49,7 @@ def wolf_populator(max_x, max_y, moose_locs):
 
 def run_island(max_x, max_y, moose_list, moose_locs, wolf_list, wolf_locs, max_clockticks):
     clocktick = 0
+    tick_dict = {}
     print('Clockticks: ' + str(clocktick))
     print('Wolf Population: ' + str(len(wolf_list)))
     print('Moose Population: ' + str(len(moose_list)))
@@ -56,6 +59,7 @@ def run_island(max_x, max_y, moose_list, moose_locs, wolf_list, wolf_locs, max_c
         moose_list, moose_locs, wolf_list, wolf_locs = single_clocktick(max_x=max_x, max_y=max_y,
                                                                         moose_list=moose_list,
                                                                         wolf_list=wolf_list,)
+        tick_dict[str(clocktick)] = {'wolves': len(wolf_list), 'moose': len(moose_list)}
         if clocktick % 10 == 0 and max_clockticks > clocktick:
             print('Clockticks: ' + str(clocktick))
             print('Wolf Population: ' + str(len(wolf_list)))
@@ -66,15 +70,26 @@ def run_island(max_x, max_y, moose_list, moose_locs, wolf_list, wolf_locs, max_c
     print('Wolf Population: ' + str(len(wolf_list)))
     print('Moose Population: ' + str(len(moose_list)))
     #draw_island(max_x=max_x, max_y=max_y, moose_locs=moose_locs, wolf_locs=wolf_locs)
+    wolf_moose_df = pd.DataFrame(tick_dict)
+    #wolf_moose_df = wolf_moose_df.pivot()
+    wolf_moose_file = 'wolf_moose.csv'
+    wolf_moose_df.to_csv(wolf_moose_file, sep=',')
+    print(wolf_moose_df.head())
+    #wolf_moose_df.plot(subplots=True)
+    #plt.xlabel('Clock tick')
+    #plt.show()
+
 
 def single_clocktick(max_x, max_y, moose_list, wolf_list):
     moose_list, wolf_list = wolf_mover(max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list)
+    moose_list = moose_mover(max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list)
 
     wolf_locs = location_list(wolf_list)
     moose_locs = location_list(moose_list)
     return moose_list, moose_locs, wolf_list, wolf_locs
 
 def location_list(animal_list):
+    """This should be fixed to list unavailable and available spots"""
     loc_list = []
     for animal in animal_list:
         loc = (animal.x, animal.y)
@@ -124,7 +139,8 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list):
             wolf_list.remove(wolf)
         if wolf.hunger >= 15:
             wolf_list.remove(wolf)
-        if wolf.pup_year >= 12:
+        if wolf.pup_year >= 8:
+            wolf.pup_year = 0
             animal_locs = wolf_locs + moose_locs
             birthed = False
             while not birthed:
@@ -142,6 +158,55 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list):
                 else:
                     birthed = True
     return moose_list, wolf_list
+
+def moose_mover(max_x, max_y, moose_list, wolf_list):
+    for moose in moose_list:
+        moose.age += 1
+        moose.calf_year += 1
+        wolf_locs = location_list(wolf_list)
+        moose_locs = location_list(moose_list)
+        animal_locs = moose_locs + wolf_locs
+        moved = False
+        while not moved:
+            x = moose.x
+            y = moose.y
+            x += random.randint(-1, 1)
+            y += random.randint(-1, 1)
+            new_loc = (x, y)
+            nearby_animals = check_adjacency(new_loc, animal_locs)
+            if (new_loc not in nearby_animals) and (max_x > x >= 0) and (max_y > y >= 0):
+                moose_locs.append(new_loc)
+                moose.x = x
+                moose.y = y
+                moved = True
+            elif (new_loc == (moose.x, moose.y)) and (max_x > x >= 0) and (max_y > y >= 0):
+                moose_locs.append(new_loc)
+                moose.x = x
+                moose.y = y
+                moved = True
+        if moose.age > moose.death_age:
+            moose_list.remove(moose)
+        if moose.calf_year >= 25:
+            moose.calf_year = 0
+            animal_locs = wolf_locs + moose_locs
+            birthed = False
+            while not birthed:
+                x = moose.x
+                y = moose.y
+                mom_loc = (x,y)
+                nearby_animals = check_adjacency(mom_loc, animal_locs)
+                x += random.randint(-1,1)
+                y += random.randint(-1, 1)
+                calf_loc = (x,y)
+                if (calf_loc not in nearby_animals) and (max_x > x >= 0) and (max_y > y >= 0) and (calf_loc != mom_loc):
+                    moose_locs.append(calf_loc)
+                    moose_list.append(MooseCreator(x, y))
+                    birthed = True
+                else:
+                    birthed = True
+    return moose_list
+
+
 
 def get_feeding_location(adjacent_moose):
     if len(adjacent_moose) == 1:
