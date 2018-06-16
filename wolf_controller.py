@@ -1,7 +1,7 @@
 import random
 
-class WolfCreator:
 
+class WolfCreator:
     def __init__(self, x, y):
         self.x = x
         self.y = y

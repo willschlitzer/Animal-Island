@@ -1,7 +1,7 @@
 import random
 
-class MooseCreator:
 
+class MooseCreator:
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -10,5 +10,5 @@ class MooseCreator:
         self.death_age = random.randint(180, 300)
 
     def moose_age(self):
-        self.age +=1
+        self.age += 1
         self.calf_year += 1
