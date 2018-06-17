@@ -7,4 +7,4 @@ class SquirrelCreator:
         self.age = 0
         self.hunger = 0
         self.baby_age = 0
-        self.death_age = random.randint(18,30)
+        self.death_age = random.randint(24,60)

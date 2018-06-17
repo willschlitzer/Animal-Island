@@ -9,9 +9,9 @@ import math
 
 
 def main():
-    max_clockticks = 100
-    max_x = 100
-    max_y = 100
+    max_clockticks = 50
+    max_x = 150
+    max_y = 150
     moose_list, moose_locs = moose_populator(max_x=max_x, max_y=max_y)
     wolf_list, wolf_locs = wolf_populator(
         max_x=max_x, max_y=max_y, moose_locs=moose_locs
@@ -30,7 +30,7 @@ def main():
     )
 
 def squirrel_populator(max_x, max_y):
-    initial_squirrel_number = 1000
+    initial_squirrel_number = 2500
     squirrel_list = []
     for i in range(initial_squirrel_number):
         x = random.randint(0, max_x-1)
@@ -54,7 +54,7 @@ def vegatation_populator(max_x, max_y):
     return vegetation_dict
 
 def moose_populator(max_x, max_y):
-    initial_moose_number = 1000
+    initial_moose_number = 1200
     moose_list = []
     moose_locs = []
     for i in range(initial_moose_number):
@@ -74,7 +74,7 @@ def moose_populator(max_x, max_y):
 
 
 def wolf_populator(max_x, max_y, moose_locs):
-    initial_wolf_number = 75
+    initial_wolf_number = 225
     wolf_list = []
     wolf_locs = []
     for i in range(initial_wolf_number):
@@ -88,7 +88,8 @@ def wolf_populator(max_x, max_y, moose_locs):
                 empty_space = True
         wolf_list.append(WolfCreator(x=x, y=y))
     for wolf in wolf_list:
-        wolf.age = random.randint(4,36)
+        wolf.age = random.randint(4,12)
+        wolf.pup_year = random.randint(1, 8)
     return wolf_list, wolf_locs
 
 
@@ -167,11 +168,11 @@ def run_island(
             "moose",
             "squirrels",
             "wolf_births",
-            "wolf_starves",
+            "wolf_starved",
             "wolf_old_age",
             "moose_eaten",
             "moose_births",
-            "moose_starves",
+            "moose_starved",
             "moose_old_age",
             "squirrels_born",
             "squirrels_eaten",
@@ -181,15 +182,50 @@ def run_island(
         ],
     )
     wolf_moose_file = "run_data/wolf_moose.csv"
-    wolf_moose_fig = "run_data/wolf_moose_chart.png"
     wolf_moose_df.to_csv(wolf_moose_file, sep=",")
+    data_controller(wolf_moose_df)
     #print(wolf_moose_df)
-    column_list = ["wolves", "moose", "squirrels"]
-    wolf_moose_df[column_list].plot()
-    plt.xlabel("Clock tick")
-    plt.savefig(wolf_moose_fig)
-    plt.show()
 
+def data_controller(df):
+    data_plotter(df,
+                 file_name="wolf_moose_squirrel_pop_chart",
+                 column_list=["wolves", "moose", "squirrels"],
+                 x_label="Clockticks",
+                 y_label="Population",
+                 title="Animal Populations")
+    data_plotter(df,
+                 file_name="wolf_moose_birth_chart",
+                 column_list=["wolf_births", "moose_births"],
+                 x_label="Clockticks",
+                 y_label="Birth Rate",
+                 title="Moose and Wolf Birth Rates")
+    data_plotter(df,
+                 file_name='moose_data',
+                 column_list=["moose_eaten", "moose_births", "moose_starved"],
+                 x_label="Clockticks",
+                 y_label="Moose",
+                 title="Moose Data")
+    data_plotter(df,
+                 file_name='starvation_data',
+                 column_list=["moose_starved", "wolf_starved", "squirrels_starved"],
+                 x_label="Clockticks",
+                 y_label="Number Starved",
+                 title="Animal Starvation")
+    data_plotter(df,
+                 file_name='vegetation_data',
+                 column_list=["vegetation_fraction"],
+                 x_label="Clockticks",
+                 y_label="Fraction",
+                 title="Vegetation Fraction")
+    #plt.show()
+
+def data_plotter(df, file_name, column_list, x_label, y_label, title):
+    folder_file = 'run_data/' + file_name + '.png'
+    df[column_list].plot()
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.savefig(folder_file)
 
 def single_clocktick(max_x, max_y, moose_list, wolf_list, squirrel_list, vegetation_dict):
     moose_list, wolf_list, wolf_births, wolf_starves, wolf_old_age, moose_eaten, squirrel_list, squirrels_eaten = wolf_mover(
@@ -265,8 +301,11 @@ def squirrel_mover(max_x, max_y, squirrel_list, vegetation_dict):
             squirrels_starved += 1
         elif squirrel.hunger >= 1:
             squirrels_hungry += 1
-    potential_babies = random.randint(25, 75)
-    actual_babies = int(math.floor(potential_babies * (1-(squirrels_hungry/len(squirrel_list)))))
+    if len(squirrel_list) > 0:
+        potential_babies = random.randint(int(.01*len(squirrel_list)), int(.1*len(squirrel_list)))
+        actual_babies = int(math.floor(potential_babies * (1-(squirrels_hungry/len(squirrel_list)))))
+    else:
+        actual_babies = 0
     for squirrel in squirrel_list:
         squirrel.hunger += 1
         squirrel.age += 1
@@ -320,7 +359,14 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list, squirrel_list):
             if squirrel_loc == wolf_loc:
                 if wolf.hunger > 0:
                     squirrels_eaten += 1
-                    wolf.hunger -= 1
+                    if squirrel.hunger == 0 and wolf.hunger >= 3:
+                        wolf.hunger -= 3
+                    elif squirrel.hunger < 2 and wolf.hunger >= 2:
+                        wolf.hunger -= 2
+                    elif squirrel.hunger < 2 and wolf.hunger < 2:
+                        wolf.hunger = 0
+                    else:
+                        wolf.hunger -= 1
                     squirrel_list.remove(squirrel)
         adjacent_moose, empty_locs = check_adjacency(
             wolf_loc, moose_locs, max_x=max_x, max_y=max_y
@@ -336,6 +382,15 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list, squirrel_list):
                     moose_list.remove(moose)
                     moose_locs.remove(moose_loc)
                     moose_eaten += 1
+                    nearby_locs = []
+                    for z in range(wolf.x-3, wolf.x+3):
+                        for n in range(wolf.y-3, wolf.y+3):
+                            nearby_loc = (z, n)
+                            nearby_locs.append(nearby_loc)
+                    for nearby_wolf in wolf_list:
+                        nearby_wolf_loc = (nearby_wolf.x, nearby_wolf.y)
+                        if nearby_wolf_loc in nearby_locs:
+                            nearby_wolf.hunger = 0
         else:
             nearby_wolves, empty_locs = check_adjacency(
                 wolf_loc, wolf_locs, max_x=max_x, max_y=max_y
@@ -351,9 +406,10 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list, squirrel_list):
                     wolf.y = new_loc[1]
                     moved = True
         if (
-            wolf.pup_year >= random.randint(birth_age - 2, birth_age + 2)
+            wolf.pup_year >= random.randint(birth_age - 4, birth_age + 2)
             and wolf.hunger < 7
             and wolf.age >= 15
+            and (wolf.female == True)
         ):
             wolf.pup_year = 0
             animal_locs = wolf_locs + moose_locs
@@ -384,7 +440,7 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list, squirrel_list):
 
 
 def moose_mover(max_x, max_y, moose_list, wolf_list, vegetation_dict):
-    birth_age = 25
+    birth_age = 15
     moose_births = 0
     moose_starves = 0
     moose_old_age = 0
@@ -392,7 +448,7 @@ def moose_mover(max_x, max_y, moose_list, wolf_list, vegetation_dict):
         if moose.age > moose.death_age:
             moose_list.remove(moose)
             moose_old_age += 1
-        elif moose.hunger > 10:
+        elif moose.hunger > 15:
             moose_list.remove(moose)
             moose_starves += 1
     for moose in moose_list:
@@ -423,8 +479,8 @@ def moose_mover(max_x, max_y, moose_list, wolf_list, vegetation_dict):
             vegetation_dict[moose_loc][1] = 0
             moose.hunger -= 2
         if (moose.calf_year >= random.randint(birth_age - 10, birth_age + 5)) and (
-            moose.age >= 36
-        ) and (moose.hunger < 6):
+            moose.age >= 24
+        ) and (moose.hunger < 6) and (moose.female == True):
             moose.calf_year = 0
             animal_locs = wolf_locs + moose_locs
             birthed = False

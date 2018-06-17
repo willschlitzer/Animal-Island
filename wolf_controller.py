@@ -9,6 +9,7 @@ class WolfCreator:
         self.pup_year = 0
         self.hunger = 0
         self.death_age = random.randint(120, 240)
+        self.female = random.choice([True, False])
 
     def wolf_age(self):
         self.age += 1
