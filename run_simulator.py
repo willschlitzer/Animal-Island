@@ -6,18 +6,19 @@ import pandas as pd
 import numpy as np
 import random
 import math
+import time
 
 
 def main():
     max_clockticks = 50
-    max_x = 150
-    max_y = 150
+    max_x = 75
+    max_y = 75
     moose_list, moose_locs = moose_populator(max_x=max_x, max_y=max_y)
     wolf_list, wolf_locs = wolf_populator(
         max_x=max_x, max_y=max_y, moose_locs=moose_locs
     )
     squirrel_list = squirrel_populator(max_x=max_x, max_y=max_y)
-    #print(squirrel_list)
+    # print(squirrel_list)
     vegetation_dict = vegatation_populator(max_x=max_x, max_y=max_y)
     run_island(
         max_x=max_x,
@@ -26,25 +27,26 @@ def main():
         wolf_list=wolf_list,
         squirrel_list=squirrel_list,
         max_clockticks=max_clockticks,
-        vegetation_dict=vegetation_dict
+        vegetation_dict=vegetation_dict,
     )
 
+
 def squirrel_populator(max_x, max_y):
-    initial_squirrel_number = 2500
+    initial_squirrel_number = 250
     squirrel_list = []
     for i in range(initial_squirrel_number):
-        x = random.randint(0, max_x-1)
-        y = random.randint(0, max_y-1)
+        x = random.randint(0, max_x - 1)
+        y = random.randint(0, max_y - 1)
         squirrel_list.append(SquirrelCreator(x, y))
     for squirrel in squirrel_list:
-        squirrel.age = random.randint(2,8)
+        squirrel.age = random.randint(2, 8)
     return squirrel_list
 
 
 def vegatation_populator(max_x, max_y):
     vegetation_dict = {}
-    for x in range(max_x+1):
-        for y in range(max_y+1):
+    for x in range(max_x + 1):
+        for y in range(max_y + 1):
             plant_loc = (x, y)
             vegetation_randomizer = random.randint(1, 100)
             if vegetation_randomizer < 85:
@@ -53,8 +55,9 @@ def vegatation_populator(max_x, max_y):
                 vegetation_dict[plant_loc] = [False, 5]
     return vegetation_dict
 
+
 def moose_populator(max_x, max_y):
-    initial_moose_number = 1200
+    initial_moose_number = 400
     moose_list = []
     moose_locs = []
     for i in range(initial_moose_number):
@@ -68,13 +71,13 @@ def moose_populator(max_x, max_y):
                 empty_space = True
         moose_list.append(MooseCreator(x=x, y=y))
     for moose in moose_list:
-        moose.age = moose.age = random.randint(1,48)
-        moose.calf_year = random.randint(1,42)
+        moose.age = moose.age = random.randint(1, 48)
+        moose.calf_year = random.randint(1, 42)
     return moose_list, moose_locs
 
 
 def wolf_populator(max_x, max_y, moose_locs):
-    initial_wolf_number = 225
+    initial_wolf_number = 100
     wolf_list = []
     wolf_locs = []
     for i in range(initial_wolf_number):
@@ -88,7 +91,7 @@ def wolf_populator(max_x, max_y, moose_locs):
                 empty_space = True
         wolf_list.append(WolfCreator(x=x, y=y))
     for wolf in wolf_list:
-        wolf.age = random.randint(4,12)
+        wolf.age = random.randint(4, 12)
         wolf.pup_year = random.randint(1, 8)
     return wolf_list, wolf_locs
 
@@ -100,18 +103,44 @@ def run_island(
     clocktick = 0
     data_list = []
     veg_sum = veg_sum_finder(vegetation_dict=vegetation_dict)
-    veg_fraction = float(veg_sum/area)
+    veg_fraction = float(veg_sum / area)
+    diagnostic_list=[]
     print("Clockticks: " + str(clocktick))
     print("Wolf Population: " + str(len(wolf_list)))
     print("Moose Population: " + str(len(moose_list)))
     print("Squirrel Population: " + str(len(squirrel_list)))
     print("Vegetation Percentage: " + str(round(float(veg_sum / area * 100), 3)))
     # draw_island(max_x=max_x, max_y=max_y, moose_locs=moose_locs, wolf_locs=wolf_locs)
-    data_list.append([clocktick, len(wolf_list), len(moose_list), len(squirrel_list), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, veg_fraction])
+    data_list.append(
+        [
+            clocktick,
+            len(wolf_list),
+            len(moose_list),
+            len(squirrel_list),
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            veg_fraction,
+        ]
+    )
     while clocktick < max_clockticks:
+        start_time = time.time()
         clocktick += 1
         moose_list, moose_locs, wolf_list, wolf_locs, squirrel_list, wolf_births, wolf_starves, wolf_old_age, moose_eaten, moose_births, moose_starves, moose_old_age, squirrels_born, squirrels_eaten, squirrels_starved, squirrels_old_age, vegetation_dict, veg_sum = single_clocktick(
-            max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list, squirrel_list=squirrel_list, vegetation_dict=vegetation_dict
+            max_x=max_x,
+            max_y=max_y,
+            moose_list=moose_list,
+            wolf_list=wolf_list,
+            squirrel_list=squirrel_list,
+            vegetation_dict=vegetation_dict,
         )
         data_list.append(
             [
@@ -130,12 +159,24 @@ def run_island(
                 squirrels_eaten,
                 squirrels_starved,
                 squirrels_old_age,
-                float(veg_sum/area)
-            ]
-        )
+                float(veg_sum / area),
+            ])
+
+        diagnostic_list.append(
+            [
+                clocktick,
+                round((time.time() - start_time), 4),
+                len(wolf_list),
+                len(moose_list),
+                len(squirrel_list),
+                area,
+            ])
+
         if clocktick % 10 == 0 and max_clockticks > clocktick:
             print("Clockticks: " + str(clocktick))
-            print("Vegetation Percentage: " + str(round(float(veg_sum/area * 100),3)))
+            print(
+                "Vegetation Percentage: " + str(round(float(veg_sum / area * 100), 3))
+            )
             print("Wolf Population: " + str(len(wolf_list)))
             print("Moose Population: " + str(len(moose_list)))
             print("Squirrel Population: " + str(len(squirrel_list)))
@@ -159,6 +200,7 @@ def run_island(
     # draw_island(max_x=max_x, max_y=max_y, moose_locs=moose_locs, wolf_locs=wolf_locs)
     # print(data_list)
     data_array = np.array(data_list)
+    diagnostic_array = np.array(diagnostic_list)
     # print(data_array)
     wolf_moose_df = pd.DataFrame(
         data_array,
@@ -178,63 +220,113 @@ def run_island(
             "squirrels_eaten",
             "squirrels_starved",
             "squirrels_old_age",
-            "vegetation_fraction"
+            "vegetation_fraction",
         ],
     )
-    wolf_moose_file = "run_data/wolf_moose.csv"
-    wolf_moose_df.to_csv(wolf_moose_file, sep=",")
+    diagnostic_df = pd.DataFrame(
+        diagnostic_array,
+        columns=[
+            "clockticks",
+            "one_tick_time",
+            "wolves",
+            "moose",
+            "squirrels",
+            "area",
+        ]
+    )
+    csv_creator(wolf_moose_df, "island_data")
+    csv_creator(diagnostic_df, "diagnostics")
     data_controller(wolf_moose_df)
-    #print(wolf_moose_df)
+    # print(wolf_moose_df)
+
+def csv_creator(df, file_name):
+    folder_file = "run_data/" + file_name + ".csv"
+    df.to_csv(folder_file, sep=',')
 
 def data_controller(df):
-    data_plotter(df,
-                 file_name="wolf_moose_squirrel_pop_chart",
-                 column_list=["wolves", "moose", "squirrels"],
-                 x_label="Clockticks",
-                 y_label="Population",
-                 title="Animal Populations")
-    data_plotter(df,
-                 file_name="wolf_moose_birth_chart",
-                 column_list=["wolf_births", "moose_births"],
-                 x_label="Clockticks",
-                 y_label="Birth Rate",
-                 title="Moose and Wolf Birth Rates")
-    data_plotter(df,
-                 file_name='moose_data',
-                 column_list=["moose_eaten", "moose_births", "moose_starved"],
-                 x_label="Clockticks",
-                 y_label="Moose",
-                 title="Moose Data")
-    data_plotter(df,
-                 file_name='starvation_data',
-                 column_list=["moose_starved", "wolf_starved", "squirrels_starved"],
-                 x_label="Clockticks",
-                 y_label="Number Starved",
-                 title="Animal Starvation")
-    data_plotter(df,
-                 file_name='vegetation_data',
-                 column_list=["vegetation_fraction"],
-                 x_label="Clockticks",
-                 y_label="Fraction",
-                 title="Vegetation Fraction")
-    #plt.show()
+    data_plotter(
+        df,
+        file_name="wolf_moose_squirrel_pop_chart",
+        column_list=["wolves", "moose", "squirrels"],
+        x_label="Clockticks",
+        y_label="Population",
+        title="Animal Populations",
+    )
+    data_plotter(
+        df,
+        file_name="wolf_moose_pop_chart",
+        column_list=["wolves", "moose"],
+        x_label="Clockticks",
+        y_label="Population",
+        title="Animal Populations",
+    )
+    data_plotter(
+        df,
+        file_name="wolf_moose_birth_chart",
+        column_list=["wolf_births", "moose_births"],
+        x_label="Clockticks",
+        y_label="Birth Rate",
+        title="Moose and Wolf Birth Rates",
+    )
+    data_plotter(
+        df,
+        file_name="moose_data",
+        column_list=["moose_eaten", "moose_births", "moose_starved"],
+        x_label="Clockticks",
+        y_label="Moose",
+        title="Moose Data",
+    )
+    data_plotter(
+        df,
+        file_name="starvation_data",
+        column_list=["moose_starved", "wolf_starved", "squirrels_starved"],
+        x_label="Clockticks",
+        y_label="Number Starved",
+        title="Animal Starvation",
+    )
+    data_plotter(
+        df,
+        file_name="vegetation_data",
+        column_list=["vegetation_fraction"],
+        x_label="Clockticks",
+        y_label="Fraction",
+        title="Vegetation Fraction",
+    )
+    # plt.show()
+
 
 def data_plotter(df, file_name, column_list, x_label, y_label, title):
-    folder_file = 'run_data/' + file_name + '.png'
+    folder_file = "run_data/" + file_name + ".png"
     df[column_list].plot()
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
     plt.savefig(folder_file)
 
-def single_clocktick(max_x, max_y, moose_list, wolf_list, squirrel_list, vegetation_dict):
+
+def single_clocktick(
+    max_x, max_y, moose_list, wolf_list, squirrel_list, vegetation_dict
+):
     moose_list, wolf_list, wolf_births, wolf_starves, wolf_old_age, moose_eaten, squirrel_list, squirrels_eaten = wolf_mover(
-        max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list, squirrel_list=squirrel_list
+        max_x=max_x,
+        max_y=max_y,
+        moose_list=moose_list,
+        wolf_list=wolf_list,
+        squirrel_list=squirrel_list,
     )
     moose_list, moose_births, moose_starves, moose_old_age, vegetation_dict = moose_mover(
-        max_x=max_x, max_y=max_y, moose_list=moose_list, wolf_list=wolf_list, vegetation_dict=vegetation_dict
+        max_x=max_x,
+        max_y=max_y,
+        moose_list=moose_list,
+        wolf_list=wolf_list,
+        vegetation_dict=vegetation_dict,
     )
-    squirrel_list, squirrels_born, squirrels_starved, squirrels_old_age, vegetation_dict = squirrel_mover(max_x=max_x, max_y=max_y, squirrel_list=squirrel_list, vegetation_dict=vegetation_dict)
+    squirrel_list, squirrels_born, squirrels_starved, squirrels_old_age, vegetation_dict = squirrel_mover(
+        max_x=max_x,
+        max_y=max_y,
+        squirrel_list=squirrel_list,
+        vegetation_dict=vegetation_dict,
+    )
     vegetation_dict, veg_sum = vegetation_growing(vegetation_dict)
 
     wolf_locs = location_list(wolf_list)
@@ -257,8 +349,9 @@ def single_clocktick(max_x, max_y, moose_list, wolf_list, squirrel_list, vegetat
         squirrels_starved,
         squirrels_old_age,
         vegetation_dict,
-        veg_sum
+        veg_sum,
     )
+
 
 def vegetation_growing(vegetation_dict):
     # Add a vegetation total sum
@@ -272,6 +365,7 @@ def vegetation_growing(vegetation_dict):
 
     return vegetation_dict, veg_sum
 
+
 def veg_sum_finder(vegetation_dict):
     veg_sum = 0
     for key in vegetation_dict.keys():
@@ -279,12 +373,14 @@ def veg_sum_finder(vegetation_dict):
             veg_sum += 1
     return veg_sum
 
+
 def location_list(animal_list):
     loc_list = []
     for animal in animal_list:
         loc = (animal.x, animal.y)
         loc_list.append(loc)
     return loc_list
+
 
 def squirrel_mover(max_x, max_y, squirrel_list, vegetation_dict):
     squirrels_born = 0
@@ -302,16 +398,20 @@ def squirrel_mover(max_x, max_y, squirrel_list, vegetation_dict):
         elif squirrel.hunger >= 1:
             squirrels_hungry += 1
     if len(squirrel_list) > 0:
-        potential_babies = random.randint(int(.01*len(squirrel_list)), int(.1*len(squirrel_list)))
-        actual_babies = int(math.floor(potential_babies * (1-(squirrels_hungry/len(squirrel_list)))))
+        potential_babies = random.randint(
+            int(.01 * len(squirrel_list)), int(.1 * len(squirrel_list))
+        )
+        actual_babies = int(
+            math.floor(potential_babies * (1 - (squirrels_hungry / len(squirrel_list))))
+        )
     else:
         actual_babies = 0
     for squirrel in squirrel_list:
         squirrel.hunger += 1
         squirrel.age += 1
         squirrel.baby_age += 1
-        x = random.randint(0, max_x-1)
-        y = random.randint(0, max_y-1)
+        x = random.randint(0, max_x - 1)
+        y = random.randint(0, max_y - 1)
         squirrel.x = x
         squirrel.y = y
         squirrel_loc = (x, y)
@@ -319,7 +419,9 @@ def squirrel_mover(max_x, max_y, squirrel_list, vegetation_dict):
             vegetation_dict[squirrel_loc][0] = False
             vegetation_dict[squirrel_loc][1] -= 5
             squirrel.hunger = 0
-        elif (vegetation_dict[squirrel_loc][0] == False) and (vegetation_dict[squirrel_loc][1] > 5):
+        elif (vegetation_dict[squirrel_loc][0] == False) and (
+            vegetation_dict[squirrel_loc][1] > 5
+        ):
             vegetation_dict[squirrel_loc][1] -= 5
             squirrel.hunger = 0
     for i in range(actual_babies):
@@ -327,9 +429,13 @@ def squirrel_mover(max_x, max_y, squirrel_list, vegetation_dict):
         x = random.randint(0, max_x)
         y = random.randint(0, max_y)
         squirrel_list.append(SquirrelCreator(x, y))
-    return squirrel_list, squirrels_born, squirrels_starved, squirrels_old_age, vegetation_dict
-
-
+    return (
+        squirrel_list,
+        squirrels_born,
+        squirrels_starved,
+        squirrels_old_age,
+        vegetation_dict,
+    )
 
 
 def wolf_mover(max_x, max_y, moose_list, wolf_list, squirrel_list):
@@ -383,8 +489,8 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list, squirrel_list):
                     moose_locs.remove(moose_loc)
                     moose_eaten += 1
                     nearby_locs = []
-                    for z in range(wolf.x-3, wolf.x+3):
-                        for n in range(wolf.y-3, wolf.y+3):
+                    for z in range(wolf.x - 3, wolf.x + 3):
+                        for n in range(wolf.y - 3, wolf.y + 3):
                             nearby_loc = (z, n)
                             nearby_locs.append(nearby_loc)
                     for nearby_wolf in wolf_list:
@@ -436,7 +542,16 @@ def wolf_mover(max_x, max_y, moose_list, wolf_list, squirrel_list):
                     birthed = True
                 else:
                     birthed = True
-    return moose_list, wolf_list, wolf_births, wolf_starves, wolf_old_age, moose_eaten, squirrel_list, squirrels_eaten
+    return (
+        moose_list,
+        wolf_list,
+        wolf_births,
+        wolf_starves,
+        wolf_old_age,
+        moose_eaten,
+        squirrel_list,
+        squirrels_eaten,
+    )
 
 
 def moose_mover(max_x, max_y, moose_list, wolf_list, vegetation_dict):
@@ -474,13 +589,16 @@ def moose_mover(max_x, max_y, moose_list, wolf_list, vegetation_dict):
                 moved = True
         moose_loc = (moose.x, moose.y)
         moose_food = vegetation_dict[moose_loc]
-        if moose_food[0] == True and moose.hunger>0:
+        if moose_food[0] == True and moose.hunger > 0:
             vegetation_dict[moose_loc][0] = False
             vegetation_dict[moose_loc][1] = 0
-            moose.hunger -= 2
-        if (moose.calf_year >= random.randint(birth_age - 10, birth_age + 5)) and (
-            moose.age >= 24
-        ) and (moose.hunger < 6) and (moose.female == True):
+            moose.hunger -= 4
+        if (
+            (moose.calf_year >= random.randint(birth_age - 10, birth_age + 5))
+            and (moose.age >= 24)
+            and (moose.hunger < 6)
+            and (moose.female == True)
+        ):
             moose.calf_year = 0
             animal_locs = wolf_locs + moose_locs
             birthed = False
