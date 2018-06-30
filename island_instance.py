@@ -33,7 +33,8 @@ class IslandCreator:
                     'occupying_animal': None,
                     'moose':False,
                     'wolf':False,
-                    'squirrel_count':0
+                    'squirrel_count':0,
+                    'occupying_squirrels':[]
                 }
         self.location_dict = location_dict
 
@@ -80,4 +81,15 @@ class IslandCreator:
             self.location_dict[(x, y)]['occupying_animal'] = wolf
             self.location_dict[(x, y)]['wolf'] = True
             self.wolf_list.append(wolf)
+        for i in range(self.squirrel_num):
+            loc_searching = True
+            while loc_searching == True:
+                x = random.randint(0, self.max_x-1)
+                y = random.randint(0, self.max_y-1)
+                if self.location_dict[(x, y)]['water'] == False:
+                    loc_searching = False
+            squirrel = WildlifeCreator(type='squirrel', x=x, y=y)
+            self.location_dict[(x, y)]['squirrel_count'] += 1
+            self.location_dict[(x, y)]['occupying_squirrels'].append(squirrel)
+
 
