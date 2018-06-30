@@ -3,6 +3,7 @@ class IslandCreator:
         import random
         self.max_x = max_x
         self.max_y = max_y
+        self.lake_num = lake_num
         self.moose_start = moose_start
 
 
