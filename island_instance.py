@@ -16,27 +16,48 @@ class IslandCreator:
         self.location_dict_creator()
         self.lake_builder()
         self.animal_generator()
+        self.empty_tick_data()
+        self.tick_data_generator()
 
-    def data_variable_generator(self):
-        self.wolf_count = 0
-        self.moose_count = 0
-        self.squirrel_count = 0
+    def empty_tick_data(self):
         self.wolf_birth = 0
         self.wolf_starve = 0
         self.wolf_old_age = 0
         self.moose_eaten = 0
         self.moose_birth = 0
         self.moose_old_age = 0
-        self.squirrels_born = 0
+        self.squirrel_birth = 0
         self.squirrel_eaten = 0
 
+    def tick_data_generator(self):
+        self.wolf_count = len(self.wolf_list)
+        self.moose_count = len(self.moose_list)
+        self.squirrel_count = len(self.squirrel_list)
+        self.veg_pct_calc()
+        self.tick_data = [
+            self.clocktick,
+            self.wolf_count,
+            self.moose_count,
+            self.squirrel_count,
+            self.wolf_birth,
+            self.wolf_starve,
+            self.wolf_old_age,
+            self.moose_eaten,
+            self.moose_birth,
+            self.moose_old_age,
+            self.squirrel_birth,
+            self.squirrel_eaten,
+            self.veg_pct
+        ]
+
+
     def veg_pct_calc(self):
-        area = self.max_x * self.max*y
+        area = self.max_x * self.max_y
         veg_count = 0
-        for a in self.location_dict:
-            if a['veg'] == True:
+        for a in self.location_dict.keys():
+            if self.location_dict[a]['veg'] == True:
                 veg_count += 1
-        self.veg_pct = area/veg_count * 100
+        self.veg_pct = veg_count/area * 100
 
 
     def location_dict_creator(self):
