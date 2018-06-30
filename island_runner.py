@@ -12,24 +12,26 @@ def main():
     wolf_num = 25
     squirrel_num = 3000
     island = IslandCreator(
-        max_x = max_x,
-        max_y = max_y,
-        lake_num= lake_num,
-        moose_num= moose_num,
-        wolf_num = wolf_num,
-        squirrel_num = squirrel_num
+        max_x=max_x,
+        max_y=max_y,
+        lake_num=lake_num,
+        moose_num=moose_num,
+        wolf_num=wolf_num,
+        squirrel_num=squirrel_num
     )
     run_island(island=island, max_clockticks=max_clockticks)
+    for tick in island.run_data:
+        print(tick)
 
 
 def run_island(island, max_clockticks):
     island.run_data.append(island.tick_data)
-    while island.clocktick <= max_clockticks:
+    while island.clocktick < max_clockticks:
         island.clocktick += 1
         island.empty_tick_data()
         single_clocktick(island=island)
         island.tick_data_generator()
-        island.run_data.append(island.tick_data)
+        island.data_appender()
     #print(island.run_data)
 
 def single_clocktick(island):
@@ -85,7 +87,8 @@ def check_adjacency(island, x, y, moose_hunting=False, squirrel=False):
     for a in range(x-1, x+2):
         for b in range(y-1, y+2):
             if (0 <= a < island.max_x) & (0 <= b < island.max_y):
-                adjacent_squares.append((a,b))
+                if island.location_dict[(a, b)]['water'] == False:
+                    adjacent_squares.append((a,b))
     if moose_hunting == True:
         moose_locs = []
         for square in adjacent_squares:
@@ -95,7 +98,7 @@ def check_adjacency(island, x, y, moose_hunting=False, squirrel=False):
     else:
         empty_locs = []
         for square in adjacent_squares:
-            if (island.location_dict[square]['occupied'] == False) & (island.location_dict[square]['water'] == False):
+            if island.location_dict[square]['occupied'] == False:
                 empty_locs.append(square)
         return empty_locs
 

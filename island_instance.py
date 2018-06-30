@@ -13,11 +13,13 @@ class IslandCreator:
         self.squirrel_num = squirrel_num
         self.clocktick = 0
         self.run_data = []
+        self.cumulative_run_data = []
         self.location_dict_creator()
         self.lake_builder()
         self.animal_generator()
         self.empty_tick_data()
         self.tick_data_generator()
+        self.initiate_cumulative_run_data()
 
     def empty_tick_data(self):
         self.wolf_birth = 0
@@ -50,6 +52,21 @@ class IslandCreator:
             self.veg_pct
         ]
 
+    def initiate_cumulative_run_data(self):
+        self.cumulative_wolf_birth = 0
+        self.cumulative_wolf_starve = 0
+        self.cumulative_wolf_old_age = 0
+        self.cumulative_moose_eaten = 0
+        self.cumulative_moose_birth = 0
+        self.cumulative_moose_old_age = 0
+        self.cumulative_squirrel_birth = 0
+        self.cumulative_squirrel_eaten = 0
+
+    def data_appender(self):
+        self.run_data.append(self.tick_data)
+        #self.cumulative_wolf_birth += self.wolf_birth
+        #self.cumulative_wolf_starve += self.wolf_starve
+        #self.cumulative_wolf_old_age += self.wolf_old_age
 
     def veg_pct_calc(self):
         area = self.max_x * self.max_y
