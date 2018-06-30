@@ -10,8 +10,11 @@ class WildlifeCreator:
         self.baby_age = 0
         self.female = random.choice([True, False])
         if type == 'wolf':
+            self.type = 'wolf'
             self.death_age = abs(int(np.random.normal(180, 25)))
         elif type == 'moose':
+            self.type= 'moose'
             self.death_age = abs(int(np.random.normal(250, 30)))
         elif type == 'squirrel':
+            self.type = 'squirrel'
             self.death_age = abs(int(np.random.normal(30, 6)))
