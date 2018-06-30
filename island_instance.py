@@ -27,8 +27,11 @@ class IslandCreator:
         self.wolf_old_age = 0
         self.moose_eaten = 0
         self.moose_birth = 0
+        self.moose_starve = 0
         self.moose_old_age = 0
         self.squirrel_birth = 0
+        self.squirrel_starve = 0
+        self.squirrel_old_age = 0
         self.squirrel_eaten = 0
 
     def tick_data_generator(self):
@@ -46,8 +49,11 @@ class IslandCreator:
             self.wolf_old_age,
             self.moose_eaten,
             self.moose_birth,
+            self.moose_starve,
             self.moose_old_age,
             self.squirrel_birth,
+            self.squirrel_starve,
+            self.squirrel_old_age,
             self.squirrel_eaten,
             self.veg_pct
         ]
@@ -74,7 +80,7 @@ class IslandCreator:
         for a in self.location_dict.keys():
             if self.location_dict[a]['veg'] == True:
                 veg_count += 1
-        self.veg_pct = veg_count/area * 100
+        self.veg_pct = round(veg_count/area * 100, 2)
 
 
     def location_dict_creator(self):

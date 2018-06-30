@@ -4,9 +4,9 @@ from island_instance import IslandCreator
 from wildlife_instance import WildlifeCreator
 
 def main():
-    max_clockticks = 1000
-    max_x = 100
-    max_y = 100
+    max_clockticks = 100
+    max_x = 60
+    max_y = 40
     lake_num = 5
     moose_num = 100
     wolf_num = 25
@@ -20,8 +20,6 @@ def main():
         squirrel_num=squirrel_num
     )
     run_island(island=island, max_clockticks=max_clockticks)
-    for tick in island.run_data:
-        print(tick)
 
 
 def run_island(island, max_clockticks):
@@ -32,10 +30,13 @@ def run_island(island, max_clockticks):
         single_clocktick(island=island)
         island.tick_data_generator()
         island.data_appender()
-    #print(island.run_data)
+        if island.clocktick % 1 == 0:
+            print(island.tick_data)
+
 
 def single_clocktick(island):
     wolf_mover(island=island)
+    moose_mover(island=island)
 
 def wolf_mover(island):
     for wolf in island.wolf_list:
@@ -46,11 +47,23 @@ def wolf_mover(island):
             island.location_dict[old_loc]['wolf'] = False
             island.location_dict[old_loc]['occupying_animal'] = None
             if wolf.age > wolf.death_age:
-                wolf.old_age += 1
+                island.wolf_old_age += 1
             else:
-                wolf.starve += 1
+                island.wolf_starve += 1
             island.wolf_list.remove(wolf)
             continue
+        if (wolf.baby_age > wolf.birth_age) & (wolf.hunger < wolf.starve - 1):
+            empty_locs = check_adjacency(island=island, x=x, y=y)
+            if len(empty_locs) > 0:
+                cub_loc = random.choice(empty_locs)
+                cub_x, cub_y = cub_loc[0], cub_loc[1]
+                cub = WildlifeCreator('wolf', cub_x, cub_y)
+                island.location_dict[old_loc]['occupied'] = True
+                island.location_dict[old_loc]['wolf'] = True
+                island.location_dict[old_loc]['occupying_animal'] = cub
+                island.wolf_list.append(cub)
+                island.wolf_birth += 1
+                wolf.baby_age = 0
         wolf.age += 1
         wolf.baby_age += 1
         wolf.hunger += 1
@@ -67,11 +80,11 @@ def wolf_mover(island):
             island.location_dict[hunting_loc]['moose'] = False
             island.location_dict[hunting_loc]['wolf'] = True
             wolf.x, wolf.y = hunting_loc[0], hunting_loc[1]
-
+            new_loc = hunting_loc
         else:
             empty_locs = check_adjacency(island=island, x=x, y=y)
             if empty_locs == []:
-                continue
+                new_loc = old_loc
             else:
                 new_loc = random.choice(empty_locs)
                 island.location_dict[old_loc]['occupying_animal'] = None
@@ -79,6 +92,16 @@ def wolf_mover(island):
                 island.location_dict[new_loc]['occupying_animal'] = wolf
                 island.location_dict[new_loc]['wolf'] = True
                 wolf.x, wolf.y = new_loc[0], new_loc[1]
+        if (island.location_dict[new_loc]['squirrel_count'] > 0) & (wolf.hunger > 0):
+            eating_total = 2*island.location_dict[new_loc]['squirrel_count']
+            if wolf.hunger > eating_total:
+                wolf.hunger -= eating_total
+            else:
+                wolf.hunger = 0
+            island.location_dict[new_loc]['squirrel_count'] = 0
+            for squirrel in island.location_dict[new_loc]['occupying_squirrels']:
+                island.squirrel_list.remove(squirrel)
+            island.location_dict[new_loc]['occupying_squirrels'] = None
 
 def moose_mover(island):
     for moose in island.moose_list:
@@ -89,15 +112,27 @@ def moose_mover(island):
             island.location_dict[old_loc]['moose'] = False
             island.location_dict[old_loc]['occupying_animal'] = None
             if moose.age > moose.death_age:
-                moose.old_age += 1
+                island.moose_old_age += 1
             else:
-                moose.starve += 1
+                island.moose_starve += 1
             island.moose_list.remove(moose)
             continue
+        if (moose.baby_age > moose.birth_age) & (moose.hunger < moose.starve -1):
+            empty_locs = check_adjacency(island=island, x=x, y=y)
+            if len(empty_locs) > 0:
+                cub_loc = random.choice(empty_locs)
+                cub_x, cub_y = cub_loc[0], cub_loc[1]
+                cub = WildlifeCreator('moose', cub_x, cub_y)
+                island.location_dict[old_loc]['occupied'] = True
+                island.location_dict[old_loc]['moose'] = True
+                island.location_dict[old_loc]['occupying_animal'] = cub
+                island.moose_list.append(cub)
+                island.moose_birth += 1
+                moose.baby_age = 0
         moose.age += 1
         moose.baby_age += 1
         moose.hunger += 1
-        empty_locs = check_adjacency(x, y)
+        empty_locs = check_adjacency(island, x, y)
         if empty_locs == []:
             new_loc = old_loc
         else:
