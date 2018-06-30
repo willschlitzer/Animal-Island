@@ -10,9 +10,9 @@ import time
 
 
 def main():
-    max_clockticks = 50
-    max_x = 75
-    max_y = 75
+    max_clockticks = 500
+    max_x = 100
+    max_y = 100
     moose_list, moose_locs = moose_populator(max_x=max_x, max_y=max_y)
     wolf_list, wolf_locs = wolf_populator(
         max_x=max_x, max_y=max_y, moose_locs=moose_locs
@@ -32,7 +32,7 @@ def main():
 
 
 def squirrel_populator(max_x, max_y):
-    initial_squirrel_number = 250
+    initial_squirrel_number = 500
     squirrel_list = []
     for i in range(initial_squirrel_number):
         x = random.randint(0, max_x - 1)
@@ -57,7 +57,7 @@ def vegatation_populator(max_x, max_y):
 
 
 def moose_populator(max_x, max_y):
-    initial_moose_number = 400
+    initial_moose_number = 200
     moose_list = []
     moose_locs = []
     for i in range(initial_moose_number):
