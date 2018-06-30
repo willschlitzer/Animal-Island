@@ -11,9 +11,33 @@ class IslandCreator:
         self.moose_num = moose_num
         self.wolf_num = wolf_num
         self.squirrel_num = squirrel_num
+        self.clocktick = 0
+        self.run_data = []
         self.location_dict_creator()
         self.lake_builder()
         self.animal_generator()
+
+    def data_variable_generator(self):
+        self.wolf_count = 0
+        self.moose_count = 0
+        self.squirrel_count = 0
+        self.wolf_birth = 0
+        self.wolf_starve = 0
+        self.wolf_old_age = 0
+        self.moose_eaten = 0
+        self.moose_birth = 0
+        self.moose_old_age = 0
+        self.squirrels_born = 0
+        self.squirrel_eaten = 0
+
+    def veg_pct_calc(self):
+        area = self.max_x * self.max*y
+        veg_count = 0
+        for a in self.location_dict:
+            if a['veg'] == True:
+                veg_count += 1
+        self.veg_pct = area/veg_count * 100
+
 
     def location_dict_creator(self):
         location_dict = {}
@@ -57,6 +81,7 @@ class IslandCreator:
     def animal_generator(self):
         self.moose_list = []
         self.wolf_list = []
+        self.squirrel_list = []
         for i in range(self.moose_num):
             loc_searching = True
             while loc_searching == True:
@@ -91,5 +116,6 @@ class IslandCreator:
             squirrel = WildlifeCreator(type='squirrel', x=x, y=y)
             self.location_dict[(x, y)]['squirrel_count'] += 1
             self.location_dict[(x, y)]['occupying_squirrels'].append(squirrel)
+            self.squirrel_list.append(squirrel)
 
 
