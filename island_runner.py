@@ -39,13 +39,12 @@ def single_clocktick(island):
 
 def wolf_mover(island):
     for wolf in island.wolf_list:
-        x = wolf.x
-        y = wolf.y
+        x, y = wolf.x, wolf.y
         old_loc = (x,y)
         if (wolf.age > wolf.death_age) or (wolf.hunger > wolf.starve):
-            island.location_dict[(x,y)]['occupied'] = False
-            island.location_dict[(x, y)]['wolf'] = False
-            island.location_dict[(x, y)]['occupying_animal'] = None
+            island.location_dict[old_loc]['occupied'] = False
+            island.location_dict[old_loc]['wolf'] = False
+            island.location_dict[old_loc]['occupying_animal'] = None
             if wolf.age > wolf.death_age:
                 wolf.old_age += 1
             else:
@@ -81,6 +80,45 @@ def wolf_mover(island):
                 island.location_dict[new_loc]['wolf'] = True
                 wolf.x, wolf.y = new_loc[0], new_loc[1]
 
+def moose_mover(island):
+    for moose in island.moose_list:
+        x, y = moose.x, moose.y
+        old_loc = (x, y)
+        if (moose.age > moose.death_age) or (moose.hunger > moose.starve):
+            island.location_dict[old_loc]['occupied'] = False
+            island.location_dict[old_loc]['moose'] = False
+            island.location_dict[old_loc]['occupying_animal'] = None
+            if moose.age > moose.death_age:
+                moose.old_age += 1
+            else:
+                moose.starve += 1
+            island.moose_list.remove(moose)
+            continue
+        moose.age += 1
+        moose.baby_age += 1
+        moose.hunger += 1
+        empty_locs = check_adjacency(x, y)
+        if empty_locs == []:
+            new_loc = old_loc
+        else:
+            new_loc = random.choice(empty_locs)
+            island.location_dict[old_loc]['occupying_animal'] = None
+            island.location_dict[old_loc]['moose'] = False
+            island.location_dict[new_loc]['occupying_animal'] = moose
+            island.location_dict[new_loc]['moose'] = True
+        eating = False
+        if (island.location_dict[new_loc]['veg'] == True) & (island.location_dict[new_loc]['growth'] >= 20) & (moose.hunger > 0):
+            island.location_dict[new_loc]['growth'] -= 10
+            eating = True
+        elif (island.location_dict[new_loc]['veg'] == True) & (island.location_dict[new_loc]['growth'] >= 10):
+            island.location_dict[new_loc]['growth'] -= 10
+            island.location_dict[new_loc]['veg'] = False
+            eating = True
+        if eating == True:
+            if moose.hunger > 5:
+                moose.hunger -= 5
+            else:
+                moose.hunger = 0
 
 def check_adjacency(island, x, y, moose_hunting=False, squirrel=False):
     adjacent_squares = []
