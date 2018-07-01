@@ -104,7 +104,7 @@ def run_island(
     data_list = []
     veg_sum = veg_sum_finder(vegetation_dict=vegetation_dict)
     veg_fraction = float(veg_sum / area)
-    diagnostic_list=[]
+    diagnostic_list = []
     print("Clockticks: " + str(clocktick))
     print("Wolf Population: " + str(len(wolf_list)))
     print("Moose Population: " + str(len(moose_list)))
@@ -160,7 +160,8 @@ def run_island(
                 squirrels_starved,
                 squirrels_old_age,
                 float(veg_sum / area),
-            ])
+            ]
+        )
 
         diagnostic_list.append(
             [
@@ -170,7 +171,8 @@ def run_island(
                 len(moose_list),
                 len(squirrel_list),
                 area,
-            ])
+            ]
+        )
 
         if clocktick % 10 == 0 and max_clockticks > clocktick:
             print("Clockticks: " + str(clocktick))
@@ -225,23 +227,18 @@ def run_island(
     )
     diagnostic_df = pd.DataFrame(
         diagnostic_array,
-        columns=[
-            "clockticks",
-            "one_tick_time",
-            "wolves",
-            "moose",
-            "squirrels",
-            "area",
-        ]
+        columns=["clockticks", "one_tick_time", "wolves", "moose", "squirrels", "area"],
     )
     csv_creator(wolf_moose_df, "island_data")
     csv_creator(diagnostic_df, "diagnostics")
     data_controller(wolf_moose_df)
     # print(wolf_moose_df)
 
+
 def csv_creator(df, file_name):
     folder_file = "run_data/" + file_name + ".csv"
-    df.to_csv(folder_file, sep=',')
+    df.to_csv(folder_file, sep=",")
+
 
 def data_controller(df):
     data_plotter(

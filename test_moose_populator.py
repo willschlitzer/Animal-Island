@@ -1,6 +1,7 @@
 from moose_controller import MooseCreator
 import random
 
+
 def moose_main1():
     moose_num = 10
     max_x = 50
@@ -19,6 +20,7 @@ def moose_main1():
         moose_dict[str(i)] = MooseCreator(x, y)
 
     print(moose_locs)
+
 
 def moose_main2():
     moose_num = 10

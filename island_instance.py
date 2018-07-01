@@ -2,8 +2,8 @@ import random
 import numpy as np
 from wildlife_instance import WildlifeCreator
 
-class IslandCreator:
 
+class IslandCreator:
     def __init__(self, max_x, max_y, lake_num, moose_num, wolf_num, squirrel_num):
         self.max_x = max_x
         self.max_y = max_y
@@ -55,7 +55,7 @@ class IslandCreator:
             self.squirrel_starve,
             self.squirrel_old_age,
             self.squirrel_eaten,
-            self.veg_pct
+            self.veg_pct,
         ]
 
     def initiate_cumulative_run_data(self):
@@ -70,18 +70,17 @@ class IslandCreator:
 
     def data_appender(self):
         self.run_data.append(self.tick_data)
-        #self.cumulative_wolf_birth += self.wolf_birth
-        #self.cumulative_wolf_starve += self.wolf_starve
-        #self.cumulative_wolf_old_age += self.wolf_old_age
+        # self.cumulative_wolf_birth += self.wolf_birth
+        # self.cumulative_wolf_starve += self.wolf_starve
+        # self.cumulative_wolf_old_age += self.wolf_old_age
 
     def veg_pct_calc(self):
         area = self.max_x * self.max_y
         veg_count = 0
         for a in self.location_dict.keys():
-            if self.location_dict[a]['veg'] == True:
+            if self.location_dict[a]["veg"] == True:
                 veg_count += 1
-        self.veg_pct = round(veg_count/area * 100, 2)
-
+        self.veg_pct = round(veg_count / area * 100, 2)
 
     def location_dict_creator(self):
         location_dict = {}
@@ -94,33 +93,32 @@ class IslandCreator:
                     veg = False
                     growth = random.randint(1, 9)
                 location_dict[(x, y)] = {
-                    'water':False,
-                    'veg':veg,
-                    'growth':growth,
-                    'occupied':False,
-                    'occupying_animal': None,
-                    'moose':False,
-                    'wolf':False,
-                    'squirrel_count':0,
-                    'occupying_squirrels':[]
+                    "water": False,
+                    "veg": veg,
+                    "growth": growth,
+                    "occupied": False,
+                    "occupying_animal": None,
+                    "moose": False,
+                    "wolf": False,
+                    "squirrel_count": 0,
+                    "occupying_squirrels": [],
                 }
         self.location_dict = location_dict
 
     def lake_builder(self):
         water_locs = []
         for i in range(self.lake_num):
-            lake_center_x = random.randint(0, self.max_x-1)
-            lake_center_y = random.randint(0, self.max_y-1)
+            lake_center_x = random.randint(0, self.max_x - 1)
+            lake_center_y = random.randint(0, self.max_y - 1)
             size = abs(int(np.random.normal(3, .75)))
-            for x in range(lake_center_x-size, lake_center_x+size):
-                for y in range(lake_center_y-size, lake_center_y+size):
+            for x in range(lake_center_x - size, lake_center_x + size):
+                for y in range(lake_center_y - size, lake_center_y + size):
                     if (0 <= x < self.max_x) & (0 <= y < self.max_y):
-                        water_locs.append((x,y))
+                        water_locs.append((x, y))
         for loc in water_locs:
-            self.location_dict[loc]['water'] = True
-            self.location_dict[loc]['veg'] = False
-            self.location_dict[loc]['growth'] = False
-
+            self.location_dict[loc]["water"] = True
+            self.location_dict[loc]["veg"] = False
+            self.location_dict[loc]["growth"] = False
 
     def animal_generator(self):
         self.moose_list = []
@@ -129,37 +127,39 @@ class IslandCreator:
         for i in range(self.moose_num):
             loc_searching = True
             while loc_searching == True:
-                x = random.randint(0, self.max_x-1)
-                y = random.randint(0, self.max_y-1)
-                if (self.location_dict[(x,y)]['occupied'] == False) & (self.location_dict[(x,y)]['water'] == False):
+                x = random.randint(0, self.max_x - 1)
+                y = random.randint(0, self.max_y - 1)
+                if (self.location_dict[(x, y)]["occupied"] == False) & (
+                    self.location_dict[(x, y)]["water"] == False
+                ):
                     loc_searching = False
-            moose = WildlifeCreator(type='moose', x=x, y=y)
-            self.location_dict[(x, y)]['occupied'] = True
-            self.location_dict[(x, y)]['moose'] = True
-            self.location_dict[(x, y)]['occupying_animal'] = moose
+            moose = WildlifeCreator(type="moose", x=x, y=y)
+            self.location_dict[(x, y)]["occupied"] = True
+            self.location_dict[(x, y)]["moose"] = True
+            self.location_dict[(x, y)]["occupying_animal"] = moose
             self.moose_list.append(moose)
         for i in range(self.wolf_num):
             loc_searching = True
             while loc_searching == True:
-                x = random.randint(0, self.max_x-1)
-                y = random.randint(0, self.max_y-1)
-                if (self.location_dict[(x, y)]['occupied'] == False) & (self.location_dict[(x, y)]['water'] == False):
+                x = random.randint(0, self.max_x - 1)
+                y = random.randint(0, self.max_y - 1)
+                if (self.location_dict[(x, y)]["occupied"] == False) & (
+                    self.location_dict[(x, y)]["water"] == False
+                ):
                     loc_searching = False
-            wolf = WildlifeCreator(type='wolf', x=x, y=y)
-            self.location_dict[(x, y)]['occupied'] = True
-            self.location_dict[(x, y)]['occupying_animal'] = wolf
-            self.location_dict[(x, y)]['wolf'] = True
+            wolf = WildlifeCreator(type="wolf", x=x, y=y)
+            self.location_dict[(x, y)]["occupied"] = True
+            self.location_dict[(x, y)]["occupying_animal"] = wolf
+            self.location_dict[(x, y)]["wolf"] = True
             self.wolf_list.append(wolf)
         for i in range(self.squirrel_num):
             loc_searching = True
             while loc_searching == True:
-                x = random.randint(0, self.max_x-1)
-                y = random.randint(0, self.max_y-1)
-                if self.location_dict[(x, y)]['water'] == False:
+                x = random.randint(0, self.max_x - 1)
+                y = random.randint(0, self.max_y - 1)
+                if self.location_dict[(x, y)]["water"] == False:
                     loc_searching = False
-            squirrel = WildlifeCreator(type='squirrel', x=x, y=y)
-            self.location_dict[(x, y)]['squirrel_count'] += 1
-            self.location_dict[(x, y)]['occupying_squirrels'].append(squirrel)
+            squirrel = WildlifeCreator(type="squirrel", x=x, y=y)
+            self.location_dict[(x, y)]["squirrel_count"] += 1
+            self.location_dict[(x, y)]["occupying_squirrels"].append(squirrel)
             self.squirrel_list.append(squirrel)
-
-
