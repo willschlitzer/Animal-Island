@@ -1,6 +1,6 @@
 import random
 import numpy as np
-from wildlife_instance import WildlifeCreator
+from wildlife_instance import WildlifeCreator, LocustAttack
 
 
 class IslandCreator:
@@ -14,9 +14,11 @@ class IslandCreator:
         self.clocktick = 0
         self.run_data = []
         self.cumulative_run_data = []
+        self.locust_list = []
         self.location_dict_creator()
         self.lake_builder()
         self.animal_generator()
+        self.age_randomizer()
         self.empty_tick_data()
         self.tick_data_generator()
         self.initiate_cumulative_run_data()
@@ -163,3 +165,16 @@ class IslandCreator:
             self.location_dict[(x, y)]["squirrel_count"] += 1
             self.location_dict[(x, y)]["occupying_squirrels"].append(squirrel)
             self.squirrel_list.append(squirrel)
+
+    def age_randomizer(self):
+        for animal_list in [self.wolf_list, self.moose_list, self.squirrel_list]:
+            for animal in animal_list:
+                animal.age = random.randint(0, animal.death_age)
+                animal.baby_age = random.randint(0, int(1.2*animal.birth_age))
+
+    def create_swarm(self):
+        swarm_x = random.randint(0, self.max_x-1)
+        swarm_y = random.randint(0, self.max_y-1)
+        swarm = LocustAttack(swarm_x, swarm_y)
+        self.locust_list.append(swarm)
+

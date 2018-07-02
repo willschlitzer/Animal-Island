@@ -1,17 +1,19 @@
 import random
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from island_instance import IslandCreator
 from wildlife_instance import WildlifeCreator
 
 
 def main():
-    max_clockticks = 150
-    max_x = 300
-    max_y = 300
-    lake_num = 5
-    moose_num = 1500
-    wolf_num = 600
-    squirrel_num = 2500
+    max_clockticks = 500
+    max_x = 250
+    max_y = 250
+    lake_num = 25
+    moose_num = 3000
+    wolf_num = 1000
+    squirrel_num = 10000
     island = IslandCreator(
         max_x=max_x,
         max_y=max_y,
@@ -21,6 +23,7 @@ def main():
         squirrel_num=squirrel_num,
     )
     run_island(island=island, max_clockticks=max_clockticks)
+    data_collector(island=island)
 
 
 def run_island(island, max_clockticks):
@@ -31,7 +34,7 @@ def run_island(island, max_clockticks):
         single_clocktick(island=island)
         island.tick_data_generator()
         island.data_appender()
-        if island.clocktick % 5 == 0:
+        if island.clocktick % 25 == 0:
             status_printer(island=island)
 
 
@@ -40,6 +43,7 @@ def single_clocktick(island):
     moose_mover(island=island)
     squirrel_mover(island=island)
     veg_grower(island=island)
+    locust_attack(island=island)
 
 
 def wolf_mover(island):
@@ -75,44 +79,47 @@ def wolf_mover(island):
         wolf.age += 1
         wolf.baby_age += 1
         wolf.hunger += 1
-        moose_locs = check_adjacency(island=island, x=x, y=y, moose_hunting=True)
-        if len(moose_locs) > 0:
-            hunting_loc = random.choice(moose_locs)
-            moose_meal = island.location_dict[hunting_loc]["occupying_animal"]
-            island.moose_list.remove(moose_meal)
-            island.moose_eaten += 1
-            wolf.hunger = 0
-            island.location_dict[old_loc]["occupying_animal"] = None
-            island.location_dict[old_loc]["wolf"] = False
-            island.location_dict[hunting_loc]["occupying_animal"] = wolf
-            island.location_dict[hunting_loc]["moose"] = False
-            island.location_dict[hunting_loc]["wolf"] = True
-            wolf.x, wolf.y = hunting_loc[0], hunting_loc[1]
-            new_loc = hunting_loc
-        else:
-            empty_locs = check_adjacency(island=island, x=x, y=y)
-            if empty_locs == []:
-                new_loc = old_loc
-            else:
-                new_loc = random.choice(empty_locs)
-                island.location_dict[old_loc]["occupied"] = False
+        i = 0
+        while i <= 2:
+            moose_locs = check_adjacency(island=island, x=x, y=y, moose_hunting=True)
+            if len(moose_locs) > 0:
+                hunting_loc = random.choice(moose_locs)
+                moose_meal = island.location_dict[hunting_loc]["occupying_animal"]
+                island.moose_list.remove(moose_meal)
+                island.moose_eaten += 1
+                wolf.hunger = 0
                 island.location_dict[old_loc]["occupying_animal"] = None
                 island.location_dict[old_loc]["wolf"] = False
-                island.location_dict[new_loc]["occupied"] = True
-                island.location_dict[new_loc]["occupying_animal"] = wolf
-                island.location_dict[new_loc]["wolf"] = True
-                wolf.x, wolf.y = new_loc[0], new_loc[1]
-        if (island.location_dict[new_loc]["squirrel_count"] > 0) & (wolf.hunger > 0):
-            eating_total = 2 * island.location_dict[new_loc]["squirrel_count"]
-            if wolf.hunger > eating_total:
-                wolf.hunger -= eating_total
+                island.location_dict[hunting_loc]["occupying_animal"] = wolf
+                island.location_dict[hunting_loc]["moose"] = False
+                island.location_dict[hunting_loc]["wolf"] = True
+                wolf.x, wolf.y = hunting_loc[0], hunting_loc[1]
+                new_loc = hunting_loc
             else:
-                wolf.hunger = 0
-            island.squirrel_eaten += island.location_dict[new_loc]["squirrel_count"]
-            island.location_dict[new_loc]["squirrel_count"] = 0
-            for squirrel in island.location_dict[new_loc]["occupying_squirrels"]:
-                island.squirrel_list.remove(squirrel)
-            island.location_dict[new_loc]["occupying_squirrels"] = []
+                empty_locs = check_adjacency(island=island, x=x, y=y)
+                if empty_locs == []:
+                    new_loc = old_loc
+                else:
+                    new_loc = random.choice(empty_locs)
+                    island.location_dict[old_loc]["occupied"] = False
+                    island.location_dict[old_loc]["occupying_animal"] = None
+                    island.location_dict[old_loc]["wolf"] = False
+                    island.location_dict[new_loc]["occupied"] = True
+                    island.location_dict[new_loc]["occupying_animal"] = wolf
+                    island.location_dict[new_loc]["wolf"] = True
+                    wolf.x, wolf.y = new_loc[0], new_loc[1]
+            if (island.location_dict[new_loc]["squirrel_count"] > 0) & (wolf.hunger > 0):
+                eating_total = 2 * island.location_dict[new_loc]["squirrel_count"]
+                if wolf.hunger > eating_total:
+                    wolf.hunger -= eating_total
+                else:
+                    wolf.hunger = 0
+                island.squirrel_eaten += island.location_dict[new_loc]["squirrel_count"]
+                island.location_dict[new_loc]["squirrel_count"] = 0
+                for squirrel in island.location_dict[new_loc]["occupying_squirrels"]:
+                    island.squirrel_list.remove(squirrel)
+                island.location_dict[new_loc]["occupying_squirrels"] = []
+            i += 1
 
 
 def moose_mover(island):
@@ -158,25 +165,14 @@ def moose_mover(island):
             island.location_dict[new_loc]["occupying_animal"] = moose
             island.location_dict[new_loc]["moose"] = True
             moose.x, moose.y = new_loc[0], new_loc[1]
-        eating = False
-        if (
-            (island.location_dict[new_loc]["veg"] == True)
-            & (island.location_dict[new_loc]["growth"] >= 20)
-            & (moose.hunger > 0)
-        ):
+        if island.location_dict[new_loc]["growth"] >= 10:
             island.location_dict[new_loc]["growth"] -= 10
-            eating = True
-        elif (island.location_dict[new_loc]["veg"] == True) & (
-            island.location_dict[new_loc]["growth"] >= 10
-        ):
-            island.location_dict[new_loc]["growth"] -= 10
-            island.location_dict[new_loc]["veg"] = False
-            eating = True
-        if eating == True:
-            if moose.hunger > 5:
-                moose.hunger -= 5
+            if moose.hunger > 2:
+                moose.hunger -= 2
             else:
                 moose.hunger = 0
+
+
 
 
 def squirrel_mover(island):
@@ -208,24 +204,29 @@ def squirrel_mover(island):
             island.location_dict[cub_loc]["occupying_squirrels"].append(cub)
             island.squirrel_list.append(cub)
             island.squirrel_birth += 1
+            squirrel.baby_age = 0
         new_loc = random.choice(available_squares)
         squirrel.x, squirrel.y = new_loc[0], new_loc[1]
         island.location_dict[old_loc]["squirrel_count"] -= 1
         island.location_dict[old_loc]["occupying_squirrels"].remove(squirrel)
         island.location_dict[new_loc]["squirrel_count"] += 1
         island.location_dict[new_loc]["occupying_squirrels"].append(squirrel)
-        if island.location_dict[new_loc]["growth"] > 1:
-            island.location_dict[new_loc]["growth"] -= 1
-            squirrel.hunger = 0
+        if island.location_dict[new_loc]["growth"] > 3 and squirrel.hunger > 0:
+            island.location_dict[new_loc]["growth"] -= 3
+            squirrel.hunger -= 1
 
 
 def veg_grower(island):
     for loc in island.location_dict.keys():
         island.location_dict[loc]["growth"] += 1
-        if (island.location_dict[loc]["growth"] >= 10) & (
+        if (island.location_dict[loc]["growth"] >= 15) & (
             island.location_dict[loc]["veg"] == False
         ):
             island.location_dict[loc]["veg"] = True
+        elif (island.location_dict[loc]["growth"] < 15) & (
+            island.location_dict[loc]["veg"] == True
+        ):
+            island.location_dict[loc]["veg"] = False
 
 
 def check_adjacency(island, x, y, moose_hunting=False, squirrel=False):
@@ -252,6 +253,31 @@ def check_adjacency(island, x, y, moose_hunting=False, squirrel=False):
                 empty_locs.append(square)
         return empty_locs
 
+def locust_attack(island):
+    if random.randint(0, 100) <= 5:
+        island.create_swarm()
+    for swarm in island.locust_list:
+        if swarm.age > swarm.death_age:
+            island.locust_list.remove(swarm)
+            continue
+        swarm_targets = []
+        for x in range(swarm.x-swarm.size, swarm.x+swarm.size + 1):
+            for y in range(swarm.y - swarm.size, swarm.y + swarm.size + 1):
+                if (0 <= x < island.max_x) & (0 <= y < island.max_y):
+                    swarm_targets.append((x,y))
+        for locust in range(swarm.population):
+            target = random.choice(swarm_targets)
+            if island.location_dict[target]["growth"] >= 1:
+                island.location_dict[target]["growth"] -= 1
+                swarm.fed += 1
+        swarm.age += 1
+        if swarm.fed >= .1 * swarm.population:
+            swarm.population = int(swarm.population * 1.2)
+            swarm.size += 1
+        else:
+            swarm.population = int(swarm.population * .8)
+            swarm.size += 3
+
 
 def status_printer(island):
     print("Clocktick: " + str(island.clocktick))
@@ -271,6 +297,94 @@ def status_printer(island):
     print("Squirrels Eaten: " + str(island.squirrel_eaten))
     print("Vegetation Percentage: " + str(island.veg_pct))
 
+def data_collector(island):
+    data_array = np.array(island.run_data)
+    df = pd.DataFrame(data_array,
+        columns=[
+            "clockticks",
+            "wolves",
+            "moose",
+            "squirrels",
+            "wolf_births",
+            "wolf_starved",
+            "wolf_old_age",
+            "moose_eaten",
+            "moose_births",
+            "moose_starved",
+            "moose_old_age",
+            "squirrels_born",
+            "squirrels_eaten",
+            "squirrels_starved",
+            "squirrels_old_age",
+            "vegetation_fraction",
+        ],
+                      )
+    df = df.set_index('clockticks')
+    csv_creator(df, 'run_data')
+    data_controller((df))
+
+def csv_creator(df, file_name):
+    folder_file = "run_data/" + file_name + ".csv"
+    df.to_csv(folder_file, sep=",")
+
+def data_controller(df):
+    data_plotter(
+        df,
+        file_name="wolf_moose_squirrel_pop_chart",
+        column_list=["wolves", "moose", "squirrels"],
+        x_label="Clockticks",
+        y_label="Population",
+        title="Animal Populations",
+    )
+    data_plotter(
+        df,
+        file_name="wolf_moose_pop_chart",
+        column_list=["wolves", "moose"],
+        x_label="Clockticks",
+        y_label="Population",
+        title="Animal Populations",
+    )
+    data_plotter(
+        df,
+        file_name="wolf_moose_birth_chart",
+        column_list=["wolf_births", "moose_births"],
+        x_label="Clockticks",
+        y_label="Birth Rate",
+        title="Moose and Wolf Birth Rates",
+    )
+    data_plotter(
+        df,
+        file_name="moose_data",
+        column_list=["moose_eaten", "moose_births", "moose_starved"],
+        x_label="Clockticks",
+        y_label="Moose",
+        title="Moose Data",
+    )
+    data_plotter(
+        df,
+        file_name="starvation_data",
+        column_list=["moose_starved", "wolf_starved", "squirrels_starved"],
+        x_label="Clockticks",
+        y_label="Number Starved",
+        title="Animal Starvation",
+    )
+    data_plotter(
+        df,
+        file_name="vegetation_data",
+        column_list=["vegetation_fraction"],
+        x_label="Clockticks",
+        y_label="Fraction",
+        title="Vegetation Fraction",
+    )
+    # plt.show()
+
+def data_plotter(df, file_name, column_list, x_label, y_label, title):
+    folder_file = "run_data/" + file_name + ".png"
+    df[column_list].plot()
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.savefig(folder_file)
 
 if __name__ == "__main__":
     main()
